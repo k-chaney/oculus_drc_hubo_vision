@@ -75,7 +75,9 @@ LIBS          = -L$(LIBOVRPATH)/Lib/Linux/$(RELEASETYPE)/$(SYSARCH) \
 		-lpthread \
 		-lGL \
 		-lX11 \
-		-lXinerama
+		-lXinerama \
+		-lach \
+		-lrt
 
 OBJECTS       = $(OBJPATH)/drc_vision.o 
 
