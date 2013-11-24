@@ -1,8 +1,28 @@
 #include "OVR.h"
 #include <iostream>
+
+//opencv stuff
 #include "opencv.hpp"
 #include "highgui/highgui.hpp"
 #include "imgproc/imgproc.hpp"
+
+
+//hubo-ach stuff
+#include "hubo.h"
+
+
+// for ach
+#include <errno.h>
+#include <fcntl.h>
+#include <assert.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <ctype.h>
+#include <stdbool.h>
+#include <math.h>
+#include <inttypes.h>
+#include "ach.h"
+
 
 
 using namespace OVR;
@@ -14,6 +34,12 @@ Ptr<SensorDevice>       pSensor;
 SensorFusion*           pFusionResult;
 HMDInfo                 Info;
 bool                    InfoLoaded;
+int			extraOffset=0;
+
+
+
+ach_channel_t chan_hubo_ref;
+ach_channel_t chan_hubo_state;
 
 
 void Init()
@@ -55,10 +81,10 @@ cv::Mat* getFull(cv::Mat &right, cv::Mat &left)
 	double interPupillaryPixels = ((double)Info.InterpupillaryDistance*100.0*73.85);
 	int width = interPupillaryPixels;
 	resize(right,right,cv::Size(width,right.rows*((double)width/(double)right.cols)));
-	int rightx=(full->cols/2);
+	int rightx=(full->cols/2)+extraOffset;
 	int righty=(full->rows-right.rows)/2;
         resize(left,left,cv::Size(width,left.rows*((double)width/(double)left.cols)));
-	int leftx = (full->cols/2-left.cols);
+	int leftx = (full->cols/2-left.cols)-extraOffset;
 	int lefty = (full->rows-left.rows)/2;
 	//cout << "fs "<< full->cols << "x"<< full->rows << " rx: " << rightx << " ry: " << righty<< " rs: " << right.cols << "x" <<right.rows << " lx: " << leftx << " ly: " << lefty << " ls: " << left.cols<<"x"<<left.rows << endl;
 	cv::Mat rightside(*full, cv::Rect(rightx, righty, right.cols, right.rows)); // Copy constructor
@@ -125,33 +151,87 @@ void Output()
                 cout << " InterpupillaryDistance: " << Info.InterpupillaryDistance << endl;
                 cout << " DistortionK[0]: " << Info.DistortionK[0] << endl;
                 cout << " DistortionK[1]: " << Info.DistortionK[1] << endl;
-                cout << " DistortionK[2]: " << Info.DistortionK[2] << endl;
+	        cout << " DistortionK[2]: " << Info.DistortionK[2] << endl;
+
                 cout << "--------------------------" << endl;
         }
 
         Quatf quaternion = pFusionResult->GetOrientation();
 
-        cout << endl << " Press ENTER to continue" << endl;
+	float ry, rp, rr;
+	quaternion.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&ry, &rp, &rr);
+        // Create strctures to read and write
+
+        struct hubo_ref ref;
+        struct hubo_state state;
+        memset( &ref, 0, sizeof(ref));
+        memset( &state, 0, sizeof(state));
+        size_t fs;
+
+        cout << endl << "hubo-ach ready" << endl;
+ 
 	
         cv::VideoCapture cap(0);
 	if(!cap.isOpened())
 	{
 		return;
 	}
-	
+	cv::VideoCapture cap2(1);
+        if(!cap2.isOpened())
+        {
+                return;
+        }
+
+        cout << endl << " Press ENTER to continue" << endl;
 	cin.get();
         if (!pSensor||!pHMD)
         {
                 cout << "Power Cycle the Oculus Rift then restart Program" << endl;
         }
+	
+
         while(pSensor && pHMD)
         {
+		//vision section of the loop
 		cv::Mat r;
+		cv::Mat l;
 		cap >> r;
-		cv::Mat l = r.clone();
+		cap2 >> l;
 		display(r,l);
-		if(cv::waitKey(30)>=0) break;
+		//hubo-ach section of the loop
+		Quatf quaternion = pFusionResult->GetOrientation();
 
+                float yaw, pitch, roll;
+                quaternion.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&yaw, &pitch, &roll);
+                cout << " Yaw: " << yaw-ry << ", Pitch: " << pitch-rp << ", Roll: " << roll-rr << endl;
+
+                ref.ref[NKY]=yaw-ry;
+                ref.ref[NK1]=pitch-rp;
+                ach_put( &chan_hubo_ref, &ref, sizeof(ref));
+
+		//user interface section of the loop
+		int ch = cv::waitKey(30);
+		if (ch==1048624)//0 key
+		{
+			extraOffset++;
+		}
+		else if (ch == 1048633)//9 key
+		{
+			extraOffset--;
+		}
+		else if(ch==17825819)//esc to quit
+		{
+			break;
+		}
+		else if(ch==1048608)
+		{
+		        quaternion.GetEulerAngles<Axis_Y, Axis_X, Axis_Z>(&ry, &rp, &rr);
+		}
+		else if (ch>=0)
+		{
+			cout<<"Character pressed: " << ch << endl;
+		}
+		usleep(1000);
         }
 }
 
