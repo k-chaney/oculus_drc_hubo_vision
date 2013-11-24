@@ -81,16 +81,7 @@ void Clear()
 
 void Output()
 {
-	cout << "----- Oculus Console -----" << endl;
-
-	if (pHMD)
-	{
-		cout << " [x] HMD Found" << endl;
-	}
-	else
-	{
-		cout << " [ ] HMD Not Found" << endl;
-	}
+	cout << "----- Oculus Hubo Head Manipulation Console -----" << endl;
 
 	if (pSensor)
 	{
@@ -109,18 +100,6 @@ void Output()
 		cout << " ProductName: " << Info.ProductName << endl;
 		cout << " Manufacturer: " << Info.Manufacturer << endl;
 		cout << " Version: " << Info.Version << endl;
-		cout << " HResolution: " << Info.HResolution<< endl;
-		cout << " VResolution: " << Info.VResolution<< endl;
-		cout << " HScreenSize: " << Info.HScreenSize<< endl;
-		cout << " VScreenSize: " << Info.VScreenSize<< endl;
-		cout << " VScreenCenter: " << Info.VScreenCenter<< endl;
-		cout << " EyeToScreenDistance: " << Info.EyeToScreenDistance << endl;
-		cout << " LensSeparationDistance: " << Info.LensSeparationDistance << endl;
-		cout << " InterpupillaryDistance: " << Info.InterpupillaryDistance << endl;
-		cout << " DistortionK[0]: " << Info.DistortionK[0] << endl;
-		cout << " DistortionK[1]: " << Info.DistortionK[1] << endl;
-		cout << " DistortionK[2]: " << Info.DistortionK[2] << endl;
-		cout << "--------------------------" << endl;
         }
 
 	Quatf quaternion = pFusionResult->GetOrientation();
@@ -162,9 +141,10 @@ void Output()
 }
 
 
-int main()
+int main(void)
 {
 	Init();
 	Output();
 	Clear();
+	return 0;
 }

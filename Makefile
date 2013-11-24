@@ -63,7 +63,7 @@ endif
 LIBOVRPATH    = ../LibOVR
 COMMONSRCPATH = ../Samples/CommonSrc
 3RDPARTYPATH  = ../3rdParty
-INCPATH       = -I. -I.. -I$(COMMONSRCPATH) -I$(LIBOVRPATH)/Include -I$(LIBOVRPATH)/Src
+INCPATH       = -I. -I.. -I$(COMMONSRCPATH) -I$(LIBOVRPATH)/Include -I$(LIBOVRPATH)/Src -I/usr/include/opencv2
 OBJPATH       = ./Objects
 CXX_BUILD     = $(CXX) -c $(CXXFLAGS) $(INCPATH) -o $(OBJPATH)/
 
@@ -79,48 +79,38 @@ LIBS          = -L$(LIBOVRPATH)/Lib/Linux/$(RELEASETYPE)/$(SYSARCH) \
 		-lach \
 		-lrt
 
-OBJECTS       = $(OBJPATH)/drc_vision.o 
+LIBSCV        =  -lopencv_core -lopencv_highgui -lopencv_imgproc -lopencv_video -lopencv_objdetect
 
-TARGET        = ./drc_vision
+OBJECTS1       = $(OBJPATH)/drc_head_manipulation.o 
+OBJECTS2       = $(OBJPATH)/drc_vision.o 
+
+TARGET1        = ./drc_head_manipulation 
+TARGET2        = ./drc_vision
 
 ####### Rules
 
-all:    $(TARGET)
-
-$(TARGET):  $(LIBOVRPATH)/Lib/Linux/$(RELEASETYPE)/$(SYSARCH)/libovr.a
+all:    $(TARGET1) $(TARGET2)
+$(TARGET1):  $(LIBOVRPATH)/Lib/Linux/$(RELEASETYPE)/$(SYSARCH)/libovr.a
 	$(MAKE) -C $(LIBOVRPATH) DEBUG=$(DEBUG)
 
-$(TARGET):  $(OBJECTS)
-	$(LINK) $(LFLAGS) -o $(TARGET) $(OBJECTS) $(LIBS)
+$(TARGET1):  $(OBJECTS1)
+	$(LINK)  $(LFLAGS) -o $(TARGET1) $(OBJECTS1) $(LIBS)
 
-$(OBJPATH)/drc_vision.o: main.cpp 
-	$(CXX_BUILD)drc_vision.o main.cpp
+$(TARGET2):  $(LIBOVRPATH)/Lib/Linux/$(RELEASETYPE)/$(SYSARCH)/libovr.a
+	$(MAKE) -C $(LIBOVRPATH) DEBUG=$(DEBUG)
 
-$(OBJPATH)/Platform.o: ../../Samples/CommonSrc/Platform/Platform.cpp 
-	$(CXX_BUILD)Platform.o ../../Samples/CommonSrc/Platform/Platform.cpp
+$(TARGET2):  $(OBJECTS2)
+	$(LINK)  $(LFLAGS) -o $(TARGET2) $(OBJECTS2) $(LIBS) $(LIBSCV)
 
-$(OBJPATH)/Linux_Platform.o: ../../Samples/CommonSrc/Platform/Linux_Platform.cpp 
-	$(CXX_BUILD)Linux_Platform.o ../../Samples/CommonSrc/Platform/Linux_Platform.cpp
+$(OBJPATH)/drc_head_manipulation.o: head_manip.cpp 
+	$(CXX_BUILD)drc_head_manipulation.o head_manip.cpp
 
-$(OBJPATH)/Linux_Gamepad.o: ../../Samples/CommonSrc/Platform/Linux_Gamepad.cpp 
-	$(CXX_BUILD)Linux_Gamepad.o ../../Samples/CommonSrc/Platform/Linux_Gamepad.cpp
+$(OBJPATH)/drc_vision.o: drc_vision.cpp
+	$(CXX_BUILD)drc_vision.o drc_vision.cpp
 
-$(OBJPATH)/Render_Device.o: ../../Samples/CommonSrc/Render/Render_Device.cpp $
-	$(CXX_BUILD)Render_Device.o ../../Samples/CommonSrc/Render/Render_Device.cpp
-
-$(OBJPATH)/Render_GL_Device.o: ../../Samples/CommonSrc/Render/Render_GL_Device.cpp 
-	$(CXX_BUILD)Render_GL_Device.o ../../Samples/CommonSrc/Render/Render_GL_Device.cpp
-
-$(OBJPATH)/Render_LoadTextureDDS.o: ../../Samples/CommonSrc/Render/Render_LoadTextureDDS.cpp 
-	$(CXX_BUILD)Render_LoadTextureDDS.o ../../Samples/CommonSrc/Render/Render_LoadTextureDDS.cpp
-
-$(OBJPATH)/Render_LoadTextureTGA.o: ../../Samples/CommonSrc/Render/Render_LoadTextureTGA.cpp 
-	$(CXX_BUILD)Render_LoadTextureTGA.o ../../Samples/CommonSrc/Render/Render_LoadTextureTGA.cpp
-
-$(OBJPATH)/Render_XmlSceneLoader.o: ../../Samples/CommonSrc/Render/Render_XmlSceneLoader.cpp 
-	$(CXX_BUILD)Render_XmlSceneLoader.o ../../Samples/CommonSrc/Render/Render_XmlSceneLoader.cpp
 
 clean:
-	-$(DELETEFILE) $(OBJECTS)
-	-$(DELETEFILE) $(TARGET)
-
+	-$(DELETEFILE) $(OBJECTS1)
+	-$(DELETEFILE) $(TARGET1)
+	-$(DELETEFILE) $(OBJECTS2)
+	-$(DELETEFILE) $(TARGET2)
