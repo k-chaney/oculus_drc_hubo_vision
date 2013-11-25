@@ -22,8 +22,11 @@ will be fixed in the future....maybe if I have time....
 
 <p> configure your user profile by running OculusConfigurationUtility.sh (this doubles as a check to make sure everything installed properly </p>
 
+
+<p> To get all of the code and install it run the following commands </p>
+
 <p> git clone https://github.com/k-chaney/oculus_drc_hubo_vision </p>
 
 <p> mkdir Objects </p>
 
-<p> make everything </p>
+<p> make </p>
